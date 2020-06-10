@@ -16,16 +16,18 @@
 
 ## 排序算法
 
-| 算法名   | 描述 | 语言    | 文件                                                         |
-| -------- | ---- | ------- | ------------------------------------------------------------ |
-| 冒泡排序 |      | Python3 | [bubble_sort.py](https://github.com/yub1ng/Algorithm/blob/master/sort/bubble_sort.py) |
-| 选择排序 |      | Python3 | [selection_sort.py](https://github.com/yub1ng/Algorithm/blob/master/sort/selection_sort.py) |
+| 算法名   | 描述     | 语言    | 文件                                                         |
+| -------- | -------- | ------- | ------------------------------------------------------------ |
+| 冒泡排序 |          | Python3 | [bubble_sort.py](https://github.com/yub1ng/Algorithm/blob/master/sort/bubble_sort.py) |
+| 选择排序 |          | Python3 | [selection_sort.py](https://github.com/yub1ng/Algorithm/blob/master/sort/selection_sort.py) |
+| 选择排序 | 链表实现 | C       | [SelectSort.c](https://github.com/yub1ng/Algorithm/blob/master/sort/SelectSort.c) |
 
 ## 搜索算法
 
 | 算法名           | 描述                     | 语言    | 文件                                                         |
 | ---------------- | ------------------------ | ------- | ------------------------------------------------------------ |
 | 宽度优先搜索算法 | 利用open表与closed表实现 | Python3 | [bfs.py](https://github.com/yub1ng/Algorithm/blob/master/search/bfs.py) |
+| 二分查找         | 构造搜索树并使用二分查找 | C       | [BinarySearch.c](https://github.com/yub1ng/Algorithm/blob/master/BinarySearch.c) |
 
 ## 图算法
 
@@ -43,13 +45,11 @@
 
 ## 数据结构
 
-| 算法名   | 描述                     | 语言 | 文件                                                         |
-| -------- | ------------------------ | ---- | ------------------------------------------------------------ |
-| 无向图   | 邻接表实现               | C    | [UDG.c](https://github.com/yub1ng/Algorithm/blob/master/data-structure/UDG.c) |
-| 二叉树   | 链式实现                 | C    | [BiTree.c](https://github.com/yub1ng/Algorithm/blob/master/data-structure/BiTree.c) |
-| 链表     |                          | C    | [LinkList.c](https://github.com/yub1ng/Algorithm/blob/master/data-structure/LinkList.c) |
-| 二分查找 | 构造搜索树并使用二分查找 | C    | [BinarySearch.c](https://github.com/yub1ng/Algorithm/blob/master/data-structure/BinarySearch.c) |
-| 选择排序 | 链表实现                 | C    | [SelectSort.c](https://github.com/yub1ng/Algorithm/blob/master/data-structure/SelectSort.c) |
+| 算法名 | 描述       | 语言 | 文件                                                         |
+| ------ | ---------- | ---- | ------------------------------------------------------------ |
+| 无向图 | 邻接表实现 | C    | [UDG.c](https://github.com/yub1ng/Algorithm/blob/master/data-structure/UDG.c) |
+| 二叉树 | 链式实现   | C    | [BiTree.c](https://github.com/yub1ng/Algorithm/blob/master/data-structure/BiTree.c) |
+| 链表   |            | C    | [LinkList.c](https://github.com/yub1ng/Algorithm/blob/master/data-structure/LinkList.c) |
 
 ## 规划调度
 
