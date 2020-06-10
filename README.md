@@ -53,10 +53,11 @@
 
 ## 规划调度
 
-| 算法名       | 描述       | 语言 | 文件                                                         |
-| ------------ | ---------- | ---- | ------------------------------------------------------------ |
-| 最小延迟调度 | 贪心法求解 | Java | [MinDelaySchedule.java](https://github.com/yub1ng/Algorithm/blob/master/schedule/MinDelaySchedule.java) |
-| 01背包       | 贪心法求解 | Java | [OneZeroKnapsack.java](https://github.com/yub1ng/Algorithm/blob/master/schedule/OneZeroKnapsack.java) |
+| 算法名       | 描述                                        | 语言 | 文件                                                         |
+| ------------ | ------------------------------------------- | ---- | ------------------------------------------------------------ |
+| 最小延迟调度 | 贪心法求解                                  | Java | [MinDelaySchedule.java](https://github.com/yub1ng/Algorithm/blob/master/schedule/MinDelaySchedule.java) |
+| 01背包       | 贪心法求解                                  | Java | [OneZeroKnapsack.java](https://github.com/yub1ng/Algorithm/blob/master/schedule/OneZeroKnapsack.java) |
+| 基础背包     | 根据利润/重量得到的权重，冒泡排序后装入背包 | Java | [KnapsackDemo.java](https://github.com/yub1ng/Algorithm/blob/master/schedule/KnapsackDemo.java) |
 
 ## 其他
 
