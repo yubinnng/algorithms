@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh_CN">
+<head>
+    <meta charset="UTF-8">
+    <title>五子棋</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/1.10.0/jquery.min.js"></script>
+    <style>
+        #container {
+            display: flex;
+            justify-content: center;
+        }
+        #board {
+            display: block;
+            align-self: center;
+        }
+        #menu {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .menu-item {
+            display: block;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+<div id="container">
+    <canvas id="board" width="750" height="750"></canvas>
+    <div id="menu">
+        <div id="info" class="menu-item">
+            <p>Hello</p>
+            <p>Hello</p>
+            <p>Hello</p>
+        </div>
+        <button id="start-btn" class="menu-item">开始/重开</button>
+        <button id="brawback-btn" class="menu-item">悔棋</button>
+        <select id="order" class="menu-item">
+           <option selected="selected">先手(黑子)</option>
+           <option>后手(白子)</option>
+        </select>
+    </div>
+</div>
+<script>
+    let board_size = 700
+    let line_num = 15
+    let cell_size = board_size / (line_num - 1)
+    let pad = 20
+
+    let piece_size = 20
+
+    let canvas = document.getElementById("board");
+    let context = canvas.getContext("2d");
+
+    function drawBoard() {
+        context.beginPath();
+        context.lineWidth = 2;
+        for (let i = 0; i < line_num; i++) {
+            // 竖线绘制
+            context.moveTo(i * cell_size + pad, pad);
+            context.lineTo(i * cell_size + pad, board_size + pad);
+            // // 横线绘制
+            context.moveTo(pad, i * cell_size + pad);
+            context.lineTo(board_size + pad, i * cell_size + pad);
+        }
+        context.stroke();
+    }
+
+    /**
+     * draw piece on board
+     * @param x
+     * @param y
+     * @param type white=1, black=2
+     */
+    function drawPiece(x, y, type) {
+        context.beginPath();
+            if (type===1) {
+                context.fillStyle = "white";
+                context.arc(cell_size * x + pad, cell_size * y + pad, piece_size, 0, Math.PI * 2, false);
+                context.stroke();
+            } else if (type===2){
+                context.fillStyle = "black";
+                context.arc(cell_size * x + pad, cell_size * y + pad, piece_size, 0, Math.PI * 2, false);
+            }
+            context.fill();
+    }
+
+    drawBoard()
+    drawPiece(0,0,2)
+    drawPiece(1,2,1)
+    drawPiece(14,14,1)
+
+    // // 鼠标单击
+    // let blorwh = 0;
+    // // 定义用于判断落子的二维数组
+    // let matrix = new Array(19);
+    // // 进行赋值
+    // for(let i = 0; i < 19; i++){
+    //     matrix[i] = new Array(19);
+    //     for(let j = 0; j < 19; j++){
+    //         matrix[i][j] = 0;
+    //     }
+    // }
+    // $("#canvas").click((event) => {
+    //     // 每次落子的时候取反
+    //     blorwh = !blorwh;
+    //     console.log(event.offsetX);
+    //     let canvas = document.getElementById("canvas");
+    //     let context = canvas.getContext("2d");
+    //     // 保存要落子的坐标
+    //     let arcPosX, arcPosY;
+    //     // 保存棋子在数组中的位置
+    //     let mtxPosX, mtxPosY;
+    //     // 和每一条线进行比较，如果相差10个像素以内，即，靠近
+    //     for(let x = 0; x < 19; x++){
+    //         if(Math.abs(event.offsetX - (10 + x * 20)) < 10){
+    //             // 获得需要骡子的x
+    //             arcPosX = 10 + x * 20;
+    //             mtxPosX = x;
+    //         }
+    //         if(Math.abs(event.offsetY - (10 + x * 20)) < 10){
+    //             // 获得需要的y
+    //             arcPosY = 10 + x * 20;
+    //             mtxPosY = x;
+    //         }
+    //     }
+    //     // 画出棋子
+    //     // 落子为空，进行绘制，反之不绘制
+    //     if(matrix[mtxPosX][mtxPosY] == 0) {
+    //         context.beginPath();
+    //         if (blorwh) {
+    //             context.fillStyle = "white";
+    //             context.arc(arcPosX, arcPosY, 10, 0, Math.PI * 2, false);
+    //             context.stroke();
+    //             // 白子为1
+    //             matrix[mtxPosX][mtxPosY] = 1;
+    //         } else {
+    //             context.fillStyle = "black";
+    //             context.arc(arcPosX, arcPosY, 10, 0, Math.PI * 2, false);
+    //             // 黑子为2
+    //             matrix[mtxPosX][mtxPosY] = 2;
+    //         }
+    //         context.fill();
+    //     }
+    //     // 获胜检测
+    //     if(matrix[mtxPosX - 1][mtxPosY] == matrix[mtxPosX][mtxPosY] &&
+    //         matrix[mtxPosX - 2][mtxPosY] == matrix[mtxPosX][mtxPosY]  &&
+    //             matrix[mtxPosX -3][mtxPosY] == matrix[mtxPosX][mtxPosY]  &&
+    //                 matrix[mtxPosY - 4][mtxPosY] == matrix[mtxPosX][mtxPosY]){
+    //         if(matrix[mtxPosX][mtxPosY] == 1){
+    //             alert("白方获胜");
+    //         }else{
+    //             alert("黑方获胜");
+    //         }
+    //     }
+    // })
+</script>
+</body>
+</html>

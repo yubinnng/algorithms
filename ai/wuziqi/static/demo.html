@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh_CN">
+<head>
+    <meta charset="UTF-8">
+    <title>五子棋</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/1.10.0/jquery.min.js"></script>
+</head>
+<body>
+<canvas id="canvas" width="400" height="400"></canvas>
+<script>
+    (function () {    // 画布绘制
+        let canvas = document.getElementById("canvas");
+        let context = canvas.getContext("2d");
+        context.beginPath();
+        for (let i = 0; i < 19; i++) {
+            // 竖线绘制
+            context.moveTo(10 + i * 20, 10);
+            context.lineTo(10 + i * 20, 370);
+            // 横线绘制
+            context.moveTo(10, 10 + i * 20);
+            context.lineTo(370, 10 + i * 20);
+        }
+        context.stroke();
+    })();
+    // 鼠标单击
+    let blorwh = 0;
+    // 定义用于判断落子的二维数组
+    let matrix = new Array(19);
+    // 进行赋值
+    for(let i = 0; i < 19; i++){
+        matrix[i] = new Array(19);
+        for(let j = 0; j < 19; j++){
+            matrix[i][j] = 0;
+        }
+    }
+    $("#canvas").click((event) => {
+        // 每次落子的时候取反
+        blorwh = !blorwh;
+        console.log(event.offsetX);
+        let canvas = document.getElementById("canvas");
+        let context = canvas.getContext("2d");
+        // 保存要落子的坐标
+        let arcPosX, arcPosY;
+        // 保存棋子在数组中的位置
+        let mtxPosX, mtxPosY;
+        // 和每一条线进行比较，如果相差10个像素以内，即，靠近
+        for(let x = 0; x < 19; x++){
+            if(Math.abs(event.offsetX - (10 + x * 20)) < 10){
+                // 获得需要骡子的x
+                arcPosX = 10 + x * 20;
+                mtxPosX = x;
+            }
+            if(Math.abs(event.offsetY - (10 + x * 20)) < 10){
+                // 获得需要的y
+                arcPosY = 10 + x * 20;
+                mtxPosY = x;
+            }
+        }
+        // 画出棋子
+        // 落子为空，进行绘制，反之不绘制
+        if(matrix[mtxPosX][mtxPosY] == 0) {
+            context.beginPath();
+            if (blorwh) {
+                context.fillStyle = "white";
+                context.arc(arcPosX, arcPosY, 10, 0, Math.PI * 2, false);
+                context.stroke();
+                // 白子为1
+                matrix[mtxPosX][mtxPosY] = 1;
+            } else {
+                context.fillStyle = "black";
+                context.arc(arcPosX, arcPosY, 10, 0, Math.PI * 2, false);
+                // 黑子为2
+                matrix[mtxPosX][mtxPosY] = 2;
+            }
+            context.fill();
+        }
+        // 获胜检测
+        if(matrix[mtxPosX - 1][mtxPosY] == matrix[mtxPosX][mtxPosY] &&
+            matrix[mtxPosX - 2][mtxPosY] == matrix[mtxPosX][mtxPosY]  &&
+                matrix[mtxPosX -3][mtxPosY] == matrix[mtxPosX][mtxPosY]  &&
+                    matrix[mtxPosY - 4][mtxPosY] == matrix[mtxPosX][mtxPosY]){
+            if(matrix[mtxPosX][mtxPosY] == 1){
+                alert("白方获胜");
+            }else{
+                alert("黑方获胜");
+            }
+        }
+    })
+</script>
+</body>
+</html>
