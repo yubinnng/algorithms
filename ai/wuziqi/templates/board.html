@@ -9,16 +9,19 @@
             display: flex;
             justify-content: center;
         }
+
         #board {
             display: block;
             align-self: center;
         }
+
         #menu {
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
         }
+
         .menu-item {
             display: block;
             margin: 10px;
@@ -34,11 +37,12 @@
             <p>Hello</p>
             <p>Hello</p>
         </div>
-        <button id="start-btn" class="menu-item">开始/重开</button>
-        <button id="brawback-btn" class="menu-item">悔棋</button>
-        <select id="order" class="menu-item">
-           <option selected="selected">先手(黑子)</option>
-           <option>后手(白子)</option>
+        <button id="start-btn" class="menu-iem">开始</button>
+        <button id="restart-btn" class="menu-item">重开</button>
+        <button id="drawback-btn" class="menu-item">悔棋</button>
+        <select id="player_type" class="menu-item">
+            <option value="1" selected="selected">先手(黑子)</option>
+            <option value="2">后手(白子)</option>
         </select>
     </div>
 </div>
@@ -52,6 +56,17 @@
 
     let canvas = document.getElementById("board");
     let context = canvas.getContext("2d");
+
+    let player_type = null
+    let board_id = null
+
+    function ai_type(){
+        if (player_type == 1){
+            return 2
+        } else {
+            return 1
+        }
+    }
 
     function drawBoard() {
         context.beginPath();
@@ -71,25 +86,97 @@
      * draw piece on board
      * @param x
      * @param y
-     * @param type white=1, black=2
+     * @param type black=1, white=2
      */
     function drawPiece(x, y, type) {
         context.beginPath();
-            if (type===1) {
-                context.fillStyle = "white";
-                context.arc(cell_size * x + pad, cell_size * y + pad, piece_size, 0, Math.PI * 2, false);
-                context.stroke();
-            } else if (type===2){
-                context.fillStyle = "black";
-                context.arc(cell_size * x + pad, cell_size * y + pad, piece_size, 0, Math.PI * 2, false);
-            }
-            context.fill();
+        if (type == 1) {
+            context.fillStyle = "black";
+        } else if (type == 2) {
+            context.fillStyle = "white";
+        }
+        context.arc(cell_size * x + pad, cell_size * y + pad, piece_size, 0, Math.PI * 2, false);
+        context.stroke();
+        context.fill();
     }
 
+    $('#board').click((event) => {
+        // first put
+        if (player_type === null) {
+            alert('请先点击开始')
+            return
+        }
+
+        let threshold = 10
+        // 保存要落子的坐标
+        let x, y
+        // 和每一条线进行比较，如果相差10个像素以内，即，靠近
+        for (let i = 0; i < line_num; i++) {
+            if (Math.abs(event.offsetX - (pad + i * cell_size)) < threshold) {
+                x = i
+            }
+            if (Math.abs(event.offsetY - (pad + i * cell_size)) < threshold) {
+                // 获得需要的y
+                arcPosY = 10 + x * 20;
+                y = i;
+            }
+        }
+        if (x !== undefined && y !== undefined) {
+            drawPiece(x, y, player_type)
+            $.ajax({
+                url: '/put',
+                data: {
+                    'board_id': board_id,
+                    'x': x,
+                    'y': y
+                },
+                type: 'post',
+                dataType: 'json',
+                success: function (resp) {
+                    setTimeout(() => {
+                        drawPiece(resp.x, resp.y, ai_type())
+                    }, 500)
+
+                },
+                error: function () {
+                    alt('服务异常')
+                }
+            });
+        }
+    })
+
+    $('#start-btn').click(() => {
+        player_type = $('#player_type').val()
+        $.ajax({
+                url: '/start',
+                data: {
+                    'player_type': player_type
+                },
+                type: 'post',
+                dataType: 'json',
+                success: function (resp) {
+                    board_id = resp.board_id
+                    if(player_type == 2){
+                        ai_x = resp.x
+                        ai_y = resp.y
+                        drawPiece(ai_x, ai_y, ai_type())
+                    }
+                    $('#start-btn').attr("disabled","disabled");
+                },
+                error: function () {
+                    alt('服务异常')
+                }
+            });
+    })
+
+    $('#restart-btn').click(() => {
+        location.reload()
+    })
+
     drawBoard()
-    drawPiece(0,0,2)
-    drawPiece(1,2,1)
-    drawPiece(14,14,1)
+    // drawPiece(0,0,2)
+    // drawPiece(1,2,1)
+    // drawPiece(14,14,1)
 
     // // 鼠标单击
     // let blorwh = 0;
