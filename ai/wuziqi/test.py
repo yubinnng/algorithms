@@ -1,20 +1,22 @@
-import numpy as np
-
-a = [1, 1, 1, 1, 1, 0, 0, 0]
-
-b = [1, 1, 1, 1, 1]
-
-c = np.array([
-    [1, 2],
-    [3, 4]
-])
-print(c.shape)
-print(c.T)
-
-
-import uuid
-print(str(uuid.uuid1()).replace('-', ''))
-# print(uuid.uuid3())
-# print(uuid.uuid4())
-# print(uuid.uuid5())
-
+def cal_score(self, piece_num, empty_num):
+    if piece_num == 5:
+        return 100000  # 成五
+    elif piece_num == 4:
+        if empty_num == 2:
+            return 10000  # 活四
+        elif empty_num == 1:
+            return 1000  # 死四
+    elif piece_num == 3:
+        if empty_num == 2:
+            return 1000  # 活三
+        elif empty_num == 1:
+            return 100
+    elif piece_num == 2:
+        if empty_num == 2:
+            return 100
+        elif empty_num == 1:
+            return 10
+    elif piece_num == 1 and empty_num == 2:
+        return 10
+    else:
+        return 0

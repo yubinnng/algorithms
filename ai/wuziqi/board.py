@@ -3,26 +3,26 @@ from config import *
 
 
 class Board():
-    def __init__(self, player_type=None, data=None):
+    def __init__(self, player_color=None, data=None):
         super().__init__()
         self.board_size = 15
-        self.piece_types = [1, 2]
+        self.piece_colors = [1, 2]
         self.steps = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]
 
         if data == None:
-            assert player_type != None
+            assert player_color != None
             self.data = np.zeros((self.board_size, self.board_size), dtype=int)
-            self.player_type = player_type
-            self.ai_type = self.another(player_type)
+            self.player_color = player_color
+            self.ai_color = self.another(player_color)
         else:
             self.data = data
 
-    def another(self, type):
-        assert type == BLACK_PIECE or type == WHITE_PIECE
-        if type == BLACK_PIECE:
-            return WHITE_PIECE
+    def another(self, color):
+        assert color == BLACK or color == WHITE
+        if color == BLACK:
+            return WHITE
         else:
-            return BLACK_PIECE
+            return BLACK
 
     def empty_indexes(self) -> np.ndarray:
         """
@@ -36,8 +36,8 @@ class Board():
 
     def copy_new(self):
         new_board = Board(self.data.copy())
-        new_board.player_type = self.player_type
-        new_board.ai_type = self.ai_type
+        new_board.player_color = self.player_color
+        new_board.ai_color = self.ai_color
         return new_board
 
     def can_put(self, x, y) -> bool:
@@ -46,146 +46,130 @@ class Board():
         """
         return self.in_range(x, y) and self.data[x, y] == 0
 
-    def put(self, x, y, type):
+    def put(self, x, y, color):
         assert self.can_put(x, y)
-        assert type == 1 or type == 2
-        self.data[x, y] = type
+        assert color == 1 or color == 2
+        self.data[x, y] = color
 
     def check_row(self):
         """
         检查横向是否获胜
-        :returns: can win, winner type
+        :returns: can win, winner color
         """
-        for type in self.piece_types:
+        for color in self.piece_colors:
             for line in self.data:
                 for x in range(11):
-                    if (line[x:x + 5] == type).all():
-                        return True, type
+                    if (line[x:x + 5] == color).all():
+                        return True, color
         return False, None
 
     def check_col(self):
         """
         检查纵向是否获胜
-        :returns: can win, winner type
+        :returns: can win, winner color
         """
-        for type in self.piece_types:
+        for color in self.piece_colors:
             for line in self.data.T:
                 for y in range(11):
-                    if (line[y:y + 5] == type).all():
-                        return True, type
+                    if (line[y:y + 5] == color).all():
+                        return True, color
         return False, None
 
     def check_diag(self):
         """
         检查对角是否获胜
         """
-        for type in self.piece_types:
+        for color in self.piece_colors:
             # 主对角线
             status = True
             for i in range(3):
-                if self.data[i][i] is not chess_type:
+                if self.data[i][i] is not chess_color:
                     status = False
             if status is True:
-                # print("主对角线 '%s' 棋子获胜" % chess_type)
+                # print("主对角线 '%s' 棋子获胜" % chess_color)
                 return True
             # 副对角线
             status = True
             for i in range(3):
-                if self.data[2 - i][i] is not chess_type:
+                if self.data[2 - i][i] is not chess_color:
                     status = False
             if status is True:
-                # print("副对角线 '%s' 棋子获胜" % chess_type)
+                # print("副对角线 '%s' 棋子获胜" % chess_color)
                 return True
             return False
 
-    def check_win(self, x, y, type):
+    def check_win(self, x, y, color):
         """
         判断获胜
         :return: True: win, False: loss, None: not sure
         """
         assert self.can_put(x, y)
         for step_x, step_y in self.steps:
-            temp = [type]
+            temp = [color]
             for n in range(1, 6):
                 next_x = x + n * step_x
                 next_y = y + n * step_y
                 if self.in_range(next_x, next_y):
                     temp.append(self.data[next_x, next_y])
 
-            if len(temp) == 5 and (np.array(temp) == type).all():
-                return True, type
+            if len(temp) == 5 and (np.array(temp) == color).all():
+                return True, color
             if len(temp) > 5:
-                if (np.array(temp[:-1]) == type).all():
+                if (np.array(temp[:-1]) == color).all():
                     return True
-                elif (np.array(temp) == type).all():
+                elif (np.array(temp) == color).all():
                     return False
         return None
 
+    def cal_score(self, piece_list):
+        score_sum = 0
+        piece_str = ''.join(map(str, piece_list))
+        for k, v in score_map.items():
+            count = piece_str.count(k)
+            score_sum += count * v
+        return score_sum
+
     def evaluate(self, color):
-        score = 0
+        line_list = []
+        # line_list.extend(self.data.tolist())
+        # line_list.extend(self.data.T.tolist())
+
+        # zhu dui jiao xian shang
+        for i in range(self.board_size):
+            temp = []
+            for j in range(self.board_size - i):
+                temp.append(self.data[j, j + i])
+            # line_list.append(temp)
+
+        # zhu dui jiao xian xia
+        for i in range(self.board_size):
+            temp = []
+            for j in range(self.board_size - i):
+                temp.append(self.data[j + i, j])
+            # line_list.append(temp)
+
+        # fu dui jiao xian shang
+        for i in reversed(range(self.board_size)):
+            temp = []
+            for j in range(i + 1):
+                temp.append(self.data[j, i - j])
+            # line_list.append(temp)
+
+        # fu dui jiao xian xia
+        for i in range(self.board_size):
+            temp = []
+            for j in range(self.board_size - i):
+                temp.append(self.data[j + i, -(j + 1)])
+            line_list.append(temp)
+        return line_list
 
 
+b = Board(WHITE)
+for i in range(15):
+    b.data[:, i] = i
+# print(b.cal_score([1, 1, 1, 1, 1, 1, 1]))
+print(b.evaluate(WHITE))
 
-    def cal_score(self, x, y):
-        """
-        AI的得分（AI能赢解个数减去玩家能赢的解个数）
-        :param chess_type 要判断的棋子种类
-        """
-        winner = self.check_win(x, y, self.ai_type)
-        if winner != None:
-            if winner == self.player_type:
-                # 如果用户直接可以赢，则得分无穷小，采取防守策略
-                return MIN
-            elif winner == self.ai_type:
-                return MAX
-
-        score_map = {
-            'ai': 0,
-            'player': 0
-        }
-
-        # 分别计算当前棋局AI以及玩家能赢的解有多少种
-        for type in [self.ai_type, self.player_type]:
-            temp_board = self.copy_new()
-
-            # 将空位全部填充为某一类型的棋子
-            for row in range(3):
-                for col in range(3):
-                    if temp_board.data[row][col] is not the_other(type):
-                        temp_board.data[row][col] = type
-            # 计算横向可以赢的个数
-            for row in range(3):
-                row_status = True
-                for col in range(3):
-                    if temp_board.data[row][col] is not type:
-                        row_status = False
-                if row_status is True:
-                    num_map[type] += 1
-            # 计算纵向可以赢的个数
-            for col in range(3):
-                col_status = True
-                for row in range(3):
-                    if temp_board.data[row][col] is not type:
-                        col_status = False
-                if col_status is True:
-                    num_map[type] += 1
-            # 检查主对角线可以赢的个数
-            main_diag_status = True
-            for i in range(3):
-                if temp_board.data[i][i] is not type:
-                    main_diag_status = False
-            if main_diag_status is True:
-                num_map[type] += 1
-            # 检查副对角线可以赢的个数
-            para_diag_status = True
-            for i in range(3):
-                if temp_board.data[2 - i][i] is not type:
-                    para_diag_status = False
-            if para_diag_status is True:
-                num_map[type] += 1
-        return num_map[chess_ai] - num_map[chess_player]
-
-    # # 两种棋子类型都需要判断
     # ai_can_win = check_row(chess_ai) or check_col(chess_ai) or check_diag(chess_ai)
     # player_can_win = check_row(chess_player) or check_col(chess_player) or check_diag(chess_player)
     # if ai_can_win:
