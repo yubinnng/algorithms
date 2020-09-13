@@ -22,7 +22,7 @@ def start():
     resp = {
         'board_id': board_id
     }
-    if player_type == WHITE:
+    if player_type == WHITE_VALUE:
         resp['x'] = 1
         resp['y'] = 1
     return jsonify(resp)
