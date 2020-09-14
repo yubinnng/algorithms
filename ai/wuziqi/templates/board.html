@@ -33,13 +33,9 @@
     <canvas id="board" width="750" height="750"></canvas>
     <div id="menu">
         <div id="info" class="menu-item">
-            <p>Hello</p>
-            <p>Hello</p>
-            <p>Hello</p>
         </div>
         <button id="start-btn" class="menu-iem">开始</button>
         <button id="restart-btn" class="menu-item">重开</button>
-        <button id="drawback-btn" class="menu-item">悔棋</button>
         <select id="player_type" class="menu-item">
             <option value="1" selected="selected">先手(黑子)</option>
             <option value="2">后手(白子)</option>
@@ -60,8 +56,16 @@
     let player_type = null
     let board_id = null
 
-    function ai_type(){
-        if (player_type == 1){
+    let STATUS_CANNOT_PUT = 'CANNOT_PUT'
+    let STATUS_AI_WIN = 'AI_WIN'
+    let STATUS_PLAYER_WIN = 'PLAYER_WIN'
+    let STATUS_PLAYING = 'PLAYING'
+
+    let piece_order = 1
+
+
+    function ai_type() {
+        if (player_type == 1) {
             return 2
         } else {
             return 1
@@ -69,6 +73,10 @@
     }
 
     function drawBoard() {
+        context.fillStyle = '#D5B092'
+        context.fillRect(pad, pad,board_size,board_size)
+        context.fill();
+
         context.beginPath();
         context.lineWidth = 2;
         for (let i = 0; i < line_num; i++) {
@@ -88,19 +96,29 @@
      * @param y
      * @param type black=1, white=2
      */
-    function drawPiece(x, y, type) {
+    function drawPiece(row, col, type) {
         context.beginPath();
         if (type == 1) {
-            context.fillStyle = "black";
-        } else if (type == 2) {
-            context.fillStyle = "white";
+            context.fillStyle = "black"
+        } else {
+            context.fillStyle = "white"
         }
-        context.arc(cell_size * x + pad, cell_size * y + pad, piece_size, 0, Math.PI * 2, false);
-        context.stroke();
+        point_y = cell_size * row + pad
+        point_x = cell_size * col + pad
+        context.arc(point_x, point_y, piece_size, 0, Math.PI * 2, false)
         context.fill();
+
+        if (type == 1) {
+            context.fillStyle = "white"
+        } else {
+            context.fillStyle = "black"
+        }
+        context.font="20px Georgia";
+        context.fillText(piece_order, point_x - 5 * piece_order.toString().length, point_y + 5)
+        ++piece_order
     }
 
-    $('#board').click((event) => {
+    function board_click(event){
         // first put
         if (player_type === null) {
             alert('请先点击开始')
@@ -109,64 +127,74 @@
 
         let threshold = 10
         // 保存要落子的坐标
-        let x, y
-        // 和每一条线进行比较，如果相差10个像素以内，即，靠近
+        let row, col
+        // 和每一条线进行比较，如果相差10个像素以内，即靠近
         for (let i = 0; i < line_num; i++) {
             if (Math.abs(event.offsetX - (pad + i * cell_size)) < threshold) {
-                x = i
+                col = i
             }
             if (Math.abs(event.offsetY - (pad + i * cell_size)) < threshold) {
                 // 获得需要的y
-                arcPosY = 10 + x * 20;
-                y = i;
+                arcPosY = 10 + col * 20;
+                row = i;
             }
         }
-        if (x !== undefined && y !== undefined) {
-            drawPiece(x, y, player_type)
+        if (row !== undefined && col !== undefined) {
+            $('#board').unbind('click')
+
+            drawPiece(row, col, player_type)
             $.ajax({
                 url: '/put',
                 data: {
                     'board_id': board_id,
-                    'x': x,
-                    'y': y
+                    'row': row,
+                    'col': col
                 },
                 type: 'post',
                 dataType: 'json',
                 success: function (resp) {
-                    setTimeout(() => {
-                        drawPiece(resp.x, resp.y, ai_type())
-                    }, 500)
-
+                    if (resp.status === STATUS_CANNOT_PUT) {
+                        alert('CANNOT_PUT')
+                        $('#board').bind('click', board_click)
+                    } else if (resp.status === STATUS_AI_WIN) {
+                        drawPiece(resp.row, resp.col, ai_type())
+                        window.setTimeout(()=>alert('AI WIN'), 500)
+                    } else if (resp.status === STATUS_PLAYER_WIN) {
+                        alert('Player WIN')
+                    } else {
+                        drawPiece(resp.row, resp.col, ai_type())
+                        $('#board').bind('click', board_click)
+                    }
                 },
                 error: function () {
-                    alt('服务异常')
+                    alert('服务异常')
                 }
             });
         }
-    })
+    }
 
     $('#start-btn').click(() => {
         player_type = $('#player_type').val()
         $.ajax({
-                url: '/start',
-                data: {
-                    'player_type': player_type
-                },
-                type: 'post',
-                dataType: 'json',
-                success: function (resp) {
-                    board_id = resp.board_id
-                    if(player_type == 2){
-                        ai_x = resp.x
-                        ai_y = resp.y
-                        drawPiece(ai_x, ai_y, ai_type())
-                    }
-                    $('#start-btn').attr("disabled","disabled");
-                },
-                error: function () {
-                    alt('服务异常')
+            url: '/start',
+            data: {
+                'player_type': player_type
+            },
+            type: 'post',
+            dataType: 'json',
+            success: function (resp) {
+                board_id = resp.board_id
+                if (player_type == 2) {
+                    ai_row = resp.row
+                    ai_col = resp.y
+                    drawPiece(ai_row, ai_col, ai_type())
                 }
-            });
+                $('#start-btn').attr("disabled", "disabled");
+            },
+            error: function () {
+                alt('服务异常')
+            }
+        });
     })
 
     $('#restart-btn').click(() => {
@@ -174,74 +202,7 @@
     })
 
     drawBoard()
-    // drawPiece(0,0,2)
-    // drawPiece(1,2,1)
-    // drawPiece(14,14,1)
-
-    // // 鼠标单击
-    // let blorwh = 0;
-    // // 定义用于判断落子的二维数组
-    // let matrix = new Array(19);
-    // // 进行赋值
-    // for(let i = 0; i < 19; i++){
-    //     matrix[i] = new Array(19);
-    //     for(let j = 0; j < 19; j++){
-    //         matrix[i][j] = 0;
-    //     }
-    // }
-    // $("#canvas").click((event) => {
-    //     // 每次落子的时候取反
-    //     blorwh = !blorwh;
-    //     console.log(event.offsetX);
-    //     let canvas = document.getElementById("canvas");
-    //     let context = canvas.getContext("2d");
-    //     // 保存要落子的坐标
-    //     let arcPosX, arcPosY;
-    //     // 保存棋子在数组中的位置
-    //     let mtxPosX, mtxPosY;
-    //     // 和每一条线进行比较，如果相差10个像素以内，即，靠近
-    //     for(let x = 0; x < 19; x++){
-    //         if(Math.abs(event.offsetX - (10 + x * 20)) < 10){
-    //             // 获得需要骡子的x
-    //             arcPosX = 10 + x * 20;
-    //             mtxPosX = x;
-    //         }
-    //         if(Math.abs(event.offsetY - (10 + x * 20)) < 10){
-    //             // 获得需要的y
-    //             arcPosY = 10 + x * 20;
-    //             mtxPosY = x;
-    //         }
-    //     }
-    //     // 画出棋子
-    //     // 落子为空，进行绘制，反之不绘制
-    //     if(matrix[mtxPosX][mtxPosY] == 0) {
-    //         context.beginPath();
-    //         if (blorwh) {
-    //             context.fillStyle = "white";
-    //             context.arc(arcPosX, arcPosY, 10, 0, Math.PI * 2, false);
-    //             context.stroke();
-    //             // 白子为1
-    //             matrix[mtxPosX][mtxPosY] = 1;
-    //         } else {
-    //             context.fillStyle = "black";
-    //             context.arc(arcPosX, arcPosY, 10, 0, Math.PI * 2, false);
-    //             // 黑子为2
-    //             matrix[mtxPosX][mtxPosY] = 2;
-    //         }
-    //         context.fill();
-    //     }
-    //     // 获胜检测
-    //     if(matrix[mtxPosX - 1][mtxPosY] == matrix[mtxPosX][mtxPosY] &&
-    //         matrix[mtxPosX - 2][mtxPosY] == matrix[mtxPosX][mtxPosY]  &&
-    //             matrix[mtxPosX -3][mtxPosY] == matrix[mtxPosX][mtxPosY]  &&
-    //                 matrix[mtxPosY - 4][mtxPosY] == matrix[mtxPosX][mtxPosY]){
-    //         if(matrix[mtxPosX][mtxPosY] == 1){
-    //             alert("白方获胜");
-    //         }else{
-    //             alert("黑方获胜");
-    //         }
-    //     }
-    // })
+    $('#board').bind('click', board_click)
 </script>
 </body>
 </html>

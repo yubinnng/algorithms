@@ -1,42 +1,16 @@
 import numpy as np
-from config import *
 
-
-class PieceColor():
-    def __init__(self, value):
-        self.value = value
-
-    def reverse(self):
-        if self.value == WHITE_VALUE:
-            return BLACK_VALUE
-        elif self.value == BLACK_VALUE:
-            return WHITE_VALUE
-        else:
-            raise ValueError('illegal color')
-
-    def is_black(self):
-        return self.value == BLACK_VALUE
-
-    def __eq__(self, other):
-        if isinstance(other, str):
-            return self.value == other
-        elif isinstance(other, PieceColor):
-            return self.value == other.value
-        else:
-            raise ValueError('illegal type')
-
-    def __str__(self) -> str:
-        return self.value
+from common import *
 
 
 class Board():
-    def __init__(self, player_color, data=[]):
+    def __init__(self, player_color: PieceColor, data=[]):
+        assert isinstance(player_color, PieceColor)
         super().__init__()
         self.board_size = 15
         self.steps = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]
-
-        assert isinstance(player_color, PieceColor)
-        self.now_color = player_color
+        self.player_color = player_color
+        self.ai_color = player_color.reverse()
 
         if len(data):
             self.data = data
@@ -44,7 +18,7 @@ class Board():
             self.data = np.zeros((self.board_size, self.board_size), dtype=int)
 
     def copy(self):
-        new_board = Board(self.now_color, data=self.data.copy())
+        new_board = Board(self.player_color, data=self.data.copy())
         return new_board
 
     def empty_indexes(self) -> np.ndarray:
@@ -54,22 +28,21 @@ class Board():
         """
         return np.argwhere(self.data == EMPTY_VALUE)
 
-    def in_range(self, x, y) -> bool:
-        return 0 <= x < self.board_size and 0 <= y < self.board_size
+    def in_range(self, row, col) -> bool:
+        return 0 <= row < self.board_size and 0 <= col < self.board_size
 
-    def can_put(self, x, y) -> bool:
+    def can_put(self, row, col) -> bool:
         """
         可以放置棋子
         """
-        return self.in_range(x, y) and self.data[x, y] == EMPTY_VALUE
+        return self.in_range(row, col) and self.data[row, col] == EMPTY_VALUE
 
-    def put(self, x, y, color: PieceColor):
-        assert isinstance(color, PieceColor)
-        assert self.can_put(x, y)
-        self.data[x, y] = color.value
+    def put(self, row, col, color):
+        assert self.can_put(row, col)
+        self.data[row, col] = color.value
 
-    def cal_score(self, piece_list):
-        if self.now_color.is_black():
+    def cal_score(self, piece_list, color: PieceColor) -> int:
+        if color == BLACK:
             score_map = score_map_black
         else:
             score_map = score_map_white
@@ -81,7 +54,7 @@ class Board():
             score_sum += count * v
         return score_sum
 
-    def evaluate(self):
+    def evaluate(self, color) -> int:
         line_list = []
         # heng
         line_list.extend(self.data.tolist())
@@ -117,64 +90,58 @@ class Board():
                 temp.append(self.data[j + i, -(j + 1)])
             line_list.append(temp)
 
+        if color == self.ai_color:
+            ai_ratio = 1
+            player_ratio = 0.1
+        else:
+            ai_ratio = 0.1
+            player_ratio = 1
+
         score_sum = 0
         for line in line_list:
-            score_sum += self.cal_score(line)
+            score_sum += self.cal_score(line, self.ai_color) * ai_ratio
+            score_sum -= self.cal_score(line, self.player_color) * player_ratio
         return score_sum
 
-    def min_max(self, depth):
+    def min_max(self, depth, color: PieceColor):
 
-        if depth <= 0:
-            return {
-                'score': self.evaluate()
-            }
+        # if depth <= 0:
+        #     return self.evaluate(color), None, None
 
         max = {
             'score': MIN,
-            'x': None,
-            'y': None
+            'row': None,
+            'col': None
         }
-        for x, y in self.empty_indexes():
+        for row, col in self.empty_indexes():
             temp_board = self.copy()
-            temp_board.put(x, y, self.now_color)
-            temp_max = temp_board.evaluate()
+            temp_board.put(row, col, color)
 
-            # reverse color
-            temp_board.now_color = self.now_color.reverse()
-            temp_min = self.min_max(depth - 1)
-
-            temp_score = temp_max - temp_min['score']
+            if depth > 0:
+                temp_score, _, _ = temp_board.min_max(depth - 1, color.reverse())
+            else:
+                temp_score = temp_board.evaluate(color)
 
             if temp_score > max['score']:
                 max['score'] = temp_score
-                max['x'] = x
-                max['y'] = y
-        return max
+                max['row'] = row
+                max['col'] = col
 
+        return max['score'], max['row'], max['col']
 
-b = Board(PieceColor(BLACK_VALUE))
-# for i in range(15):
-#     b.data[:, i] = i
-# b.data[0,0] = 99
+    def proceed(self, player_row, player_col):
+        if not self.can_put(player_row, player_col):
+            return STATUS_CANNOT_PUT, None, None
 
-# print(b.cal_score([1, 1, 1, 1, 1, 1, 1]))
-b.data[0:3, 0] = WHITE_VALUE
-# print(b.evaluate(BLACK))
-print(b.min_max(1))
-# ai_can_win = check_row(chess_ai) or check_col(chess_ai) or check_diag(chess_ai)
-# player_can_win = check_row(chess_player) or check_col(chess_player) or check_diag(chess_player)
-# if ai_can_win:
-#     return True, chess_ai
-# elif player_can_win:
-#     return True, chess_player
-#
-# empty_num = 0
-# for row in range(3):
-#     for col in range(3):
-#         if self.data[row][col] is ' ':
-#             empty_num += 1
-# # 若棋盘已经满了，则平局
-# if empty_num is 0:
-#     return False, 'both'
-# else:
-#     return False, None
+        self.put(player_row, player_col, self.player_color)
+        player_score = self.evaluate(self.player_color)
+        if player_score <= -WIN_THRESHOLD:
+            return STATUS_PLAYER_WIN, None, None
+
+        ai_score, ai_row, ai_col = self.min_max(1, self.ai_color)
+        self.put(ai_row, ai_col, self.ai_color)
+
+        if ai_score >= WIN_THRESHOLD:
+            return STATUS_AI_WIN, int(ai_row), int(ai_col)
+        else:
+            return STATUS_PLAYING, int(ai_row), int(ai_col)
