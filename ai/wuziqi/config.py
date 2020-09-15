@@ -15,7 +15,7 @@ STATUS_PLAYER_WIN = 'PLAYER_WIN'
 STATUS_PLAYING = 'PLAYING'
 
 score_map_black = {
-    # '010': 5,
+    '010': 5,
     '01100': 50,
     '00110': 50,
     '11010': 200,
@@ -34,7 +34,7 @@ score_map_black = {
 }
 
 score_map_white = {
-    # '020': 5,
+    '020': 5,
     '02200': 50,
     '00220': 50,
     '22020': 200,
