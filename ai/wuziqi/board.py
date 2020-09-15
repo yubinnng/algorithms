@@ -113,7 +113,6 @@ class Board():
             'row': None,
             'col': None
         }
-
         for row, col in self.empty_indexes():
             temp_board = self.copy()
             temp_board.put(row, col, color)
