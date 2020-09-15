@@ -96,55 +96,7 @@ class Board():
             score_sum -= self.cal_score(line, color.reverse()) * 0.1
         return score_sum
 
-    def max(self, depth):
-        max = {
-            'score': MIN,
-            'row': None,
-            'col': None
-        }
-
-        for row, col in self.empty_indexes():
-            temp_board = self.copy()
-            temp_board.put(row, col, self.ai_color)
-
-            if depth <= 0:
-                temp_score = temp_board.evaluate(self.ai_color)
-            else:
-                temp_score, _, _ = temp_board.min(depth - 1)
-
-            if temp_score > max['score']:
-                max['score'] = temp_score
-                max['row'] = row
-                max['col'] = col
-
-        return max['score'], max['row'], max['col']
-
-    def min(self, depth):
-        max = {
-            'score': MIN,
-            'row': None,
-            'col': None
-        }
-
-        for row, col in self.empty_indexes():
-            temp_board = self.copy()
-            temp_board.put(row, col, self.player_color)
-            if depth <= 0:
-                temp_score = temp_board.evaluate(self.player_color)
-            else:
-                temp_score, _, _ = temp_board.max(depth - 1)
-
-            if temp_score > max['score']:
-                max['score'] = temp_score
-                max['row'] = row
-                max['col'] = col
-
-        return 0 - max['score'], max['row'], max['col']
-
-    def min_max(self, depth, color: PieceColor):
-
-        if depth <= 0:
-            return self.evaluate(color.reverse()), None, None
+    def min_max(self, depth, color: PieceColor, alpha, beta):
 
         max = {
             'score': MIN,
@@ -155,13 +107,22 @@ class Board():
         for row, col in self.empty_indexes():
             temp_board = self.copy()
             temp_board.put(row, col, color)
-            temp_score, _, _ = temp_board.min_max(depth - 1, color.reverse())
-
+            if depth <= 0:
+                temp_score = self.evaluate(color)
+            else:
+                temp_score, _, _ = temp_board.min_max(depth - 1, color.reverse())
+                if color == self.ai_color:
+                    if temp_score > alpha:
+                        break
+                elif temp_score < beta:
+                    break
             if temp_score > max['score']:
                 max['score'] = temp_score
                 max['row'] = row
                 max['col'] = col
 
+        if color == self.player_color:
+            max['score'] = -max['score']
         return max['score'], max['row'], max['col']
 
     def proceed(self, player_row, player_col):
@@ -173,7 +134,7 @@ class Board():
         if player_score <= -WIN_THRESHOLD:
             return STATUS_PLAYER_WIN, None, None
 
-        ai_score, ai_row, ai_col = self.max(1)
+        ai_score, ai_row, ai_col = self.min_max(1, self.ai_color)
         self.put(ai_row, ai_col, self.ai_color)
 
         if ai_score >= WIN_THRESHOLD:
