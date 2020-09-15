@@ -1,5 +1,5 @@
 import numpy as np
-
+import time
 from common import *
 
 
@@ -109,23 +109,31 @@ class Board():
             temp_board.put(row, col, color)
             if depth <= 0:
                 temp_score = self.evaluate(color)
+                if color == self.player_color:
+                    temp_score = 0 - temp_score
             else:
-                temp_score, _, _ = temp_board.min_max(depth - 1, color.reverse())
-                if color == self.ai_color:
-                    if temp_score > alpha:
-                        break
-                elif temp_score < beta:
-                    break
+                temp_score, _, _ = temp_board.min_max(depth - 1, color.reverse(), alpha, beta)
+
             if temp_score > max['score']:
                 max['score'] = temp_score
                 max['row'] = row
                 max['col'] = col
+            #
+            # if color == self.ai_color:
+            #     alpha = max['score']
+            #     beta = beta
+            #     if temp_score > beta:
+            #         break
+            # else:
+            #     beta = -max['score']
+            #     alpha = alpha
+            #     if temp_score < alpha:
+            #         break
 
-        if color == self.player_color:
-            max['score'] = -max['score']
         return max['score'], max['row'], max['col']
 
     def proceed(self, player_row, player_col):
+        start = time.time()
         if not self.can_put(player_row, player_col):
             return STATUS_CANNOT_PUT, None, None
 
@@ -134,8 +142,11 @@ class Board():
         if player_score <= -WIN_THRESHOLD:
             return STATUS_PLAYER_WIN, None, None
 
-        ai_score, ai_row, ai_col = self.min_max(1, self.ai_color)
+        ai_score, ai_row, ai_col = self.min_max(1, self.ai_color, MIN, MAX)
         self.put(ai_row, ai_col, self.ai_color)
+
+        end = time.time()
+        print('time cost:', (end - start))
 
         if ai_score >= WIN_THRESHOLD:
             return STATUS_AI_WIN, int(ai_row), int(ai_col)
