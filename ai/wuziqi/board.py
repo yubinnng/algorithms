@@ -1,9 +1,10 @@
 import numpy as np
 import time
+import math
 from common import *
 
-
 class Board():
+    num = 0
     def __init__(self, player_color: PieceColor, data=[]):
         assert isinstance(player_color, PieceColor)
         super().__init__()
@@ -11,22 +12,22 @@ class Board():
         self.steps = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]
         self.player_color = player_color
         self.ai_color = player_color.reverse()
+        self.prev_step_player = None
+        self.prev_step_ai = None
+        self.history = []
 
         if len(data):
             self.data = data
         else:
             self.data = np.zeros((self.board_size, self.board_size), dtype=int)
 
+        self.empty_idx = [(i, j) for i in range(self.board_size) for j in range(self.board_size)]
+
     def copy(self):
         new_board = Board(self.player_color, data=self.data.copy())
+        new_board.empty_idx = self.empty_idx.copy()
+        new_board.history = self.history.copy()
         return new_board
-
-    def empty_indexes(self) -> np.ndarray:
-        """
-        获取空位置列表
-        :return: [[x1,y1], [x2,y2], ...]
-        """
-        return np.argwhere(self.data == EMPTY_VALUE)
 
     def in_range(self, row, col) -> bool:
         return 0 <= row < self.board_size and 0 <= col < self.board_size
@@ -37,9 +38,12 @@ class Board():
         """
         return self.in_range(row, col) and self.data[row, col] == EMPTY_VALUE
 
-    def put(self, row, col, color):
+    def put(self, row, col, color, record_history=False):
         assert self.can_put(row, col)
         self.data[row, col] = color.value
+        self.empty_idx.remove((row, col))
+        if record_history:
+            self.history.append((row, col, color))
 
     def cal_score(self, piece_list, color: PieceColor) -> int:
         if color == BLACK:
@@ -99,25 +103,36 @@ class Board():
 
         score_sum = 0
         for line in line_list:
-            score_sum += self.cal_score(line, self.ai_color) * ai_ratio
-            score_sum -= self.cal_score(line, self.player_color) * player_ratio
+            score_sum += self.cal_score(line, self.ai_color)
+            score_sum -= self.cal_score(line, self.player_color)
         return score_sum
 
+    @staticmethod
+    def l2_distance(v1:tuple, v2:tuple) -> float:
+        return math.sqrt((v1[0] - v2[0]) ** 2 + (v1[1] - v2[1]) ** 2)
+
+    def get_candidates(self) -> list:
+        results = {}
+        for emp_idx in self.empty_idx:
+            for hist_row, hist_col, _ in self.history:
+                dist = Board.l2_distance(emp_idx, (hist_row, hist_col))
+                if dist == 1 or dist == 2 or dist == 3 or abs(dist - 1.41) < 0.1 or abs(dist - 2.82) < 0.1 or abs(dist - 4.24) < 0.1:
+                    results[emp_idx] = dist
+        return sorted(results.keys(), key=lambda x: results[x])
+
     def max(self, depth, beta):
+        assert depth % 2 == 0
         max = {
             'score': MIN,
             'row': None,
             'col': None
         }
 
-        for row, col in self.empty_indexes():
+        for row, col in self.get_candidates():
             temp_board = self.copy()
             temp_board.put(row, col, self.ai_color)
 
-            if depth <= 0:
-                temp_score = temp_board.evaluate(self.ai_color)
-            else:
-                temp_score, _, _ = temp_board.min(depth - 1, max['score'])
+            temp_score, _, _ = temp_board.min(depth - 1, max['score'])
 
             if temp_score > max['score']:
                 max['score'] = temp_score
@@ -126,7 +141,6 @@ class Board():
 
                 if beta <= temp_score:
                     return temp_score, row, col
-
         return max['score'], max['row'], max['col']
 
     def min(self, depth, alpha):
@@ -136,11 +150,12 @@ class Board():
             'col': None
         }
 
-        for row, col in self.empty_indexes():
+        for row, col in self.get_candidates():
             temp_board = self.copy()
             temp_board.put(row, col, self.player_color)
-            if depth <= 0:
+            if depth <= 1:
                 temp_score = temp_board.evaluate(self.player_color)
+                Board.num += 1
             else:
                 temp_score, _, _ = temp_board.max(depth - 1, min['score'])
 
@@ -159,18 +174,26 @@ class Board():
         if not self.can_put(player_row, player_col):
             return STATUS_CANNOT_PUT, None, None
 
-        self.put(player_row, player_col, self.player_color)
-        player_score = self.evaluate(self.player_color)
-        if player_score <= -WIN_THRESHOLD:
+        self.put(player_row, player_col, self.player_color, record_history=True)
+
+        score = self.evaluate(self.player_color)
+        if score <= LOSS_THRESHOLD:
             return STATUS_PLAYER_WIN, None, None
 
-        ai_score, ai_row, ai_col = self.max(1, MAX)
-        self.put(ai_row, ai_col, self.ai_color)
+        score, ai_row, ai_col = self.max(4, MAX)
+
+        if score <= LOSS_THRESHOLD:
+            return STATUS_PLAYER_WIN, None, None
+
+        self.put(ai_row, ai_col, self.ai_color, record_history=True)
 
         end = time.time()
-        print('time cost:', (end - start))
+        score = self.evaluate(self.ai_color)
 
-        if ai_score >= WIN_THRESHOLD:
+        print('time cost: %.1f s, score: %d' % (end - start, score))
+        print(Board.num)
+
+        if score >= WIN_THRESHOLD:
             return STATUS_AI_WIN, int(ai_row), int(ai_col)
         else:
             return STATUS_PLAYING, int(ai_row), int(ai_col)
