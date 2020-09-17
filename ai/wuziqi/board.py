@@ -1,7 +1,9 @@
-import numpy as np
 import time
-import math
+
+import numpy as np
+
 from common import *
+
 
 class Board():
     leaf_num = 0
@@ -10,7 +12,7 @@ class Board():
         assert isinstance(player_color, PieceColor)
         super().__init__()
         self.board_size = 15
-        self.directions = [(0, -1), (0, 1), (-1, 0), (1, 0), (1, 1), (-1,-1), (1, -1), (-1, 1)]
+        self.directions = [(0, -1), (0, 1), (-1, 0), (1, 0), (-1, -1), (1, 1), (1, -1), (-1, 1)]
         self.player_color = player_color
         self.ai_color = player_color.reverse()
         self.candidates = {}
@@ -39,18 +41,26 @@ class Board():
         self.data[row, col] = color.value
         self.update_candidates(row, col, record)
 
-    def cal_score(self, piece_list, color: PieceColor) -> int:
-        if color == BLACK:
-            score_map = score_map_black
+    def cal_score(self, piece_list) -> float:
+        if self.ai_color == BLACK:
+            ai_score_map = ai_black_score
+            player_score_map = player_white_score
         else:
-            score_map = score_map_white
+            ai_score_map = ai_white_score
+            player_score_map = player_black_score
 
-        score_sum = 0
+        ai_score = 0
         piece_str = ''.join(map(str, piece_list))
-        for k, v in score_map.items():
+        for k, v in ai_score_map.items():
             count = piece_str.count(k)
-            score_sum += count * v
-        return score_sum
+            ai_score += count * v
+
+        player_score = 0
+        piece_str = ''.join(map(str, piece_list))
+        for k, v in player_score_map.items():
+            count = piece_str.count(k)
+            player_score += count * v
+        return ai_score + player_score
 
     def evaluate(self) -> int:
         Board.leaf_num += 1
@@ -92,19 +102,32 @@ class Board():
 
         score_sum = 0
         for line in line_list:
-            score_sum += self.cal_score(line, self.ai_color) * 0.5
-            score_sum -= self.cal_score(line, self.player_color)
+            score_sum += self.cal_score(line)
         return score_sum
 
-    @staticmethod
-    def l2_distance(v1:tuple, v2:tuple) -> float:
-        return math.sqrt((v1[0] - v2[0]) ** 2 + (v1[1] - v2[1]) ** 2)
-
     def get_candidates(self) -> list:
-        return sorted(self.candidates.keys(), key=lambda x: self.candidates[x])
+        return sorted(self.candidates.keys(), key=lambda x: self.candidates[x])[:10]
+
+    def position_score(self, row, col) -> float:
+        dir_line_dic = {}
+        for dir in self.directions:
+            i = 0
+            while True:
+                now_idx = (row + i * dir[0], col + i * dir[1])
+                if not self.in_range(*now_idx):
+                    break
+                if dir not in dir_line_dic:
+                    dir_line_dic[dir] = []
+                dir_line_dic[dir].append(self.data[now_idx])
+                i += 1
+        dir_line_list = list(dir_line_dic.values())
+        score = 0
+        for i in range(4):
+            line = list(reversed(dir_line_list[2 * i])) + dir_line_list[2 * i + 1][1:]
+            score += self.cal_score(line)
+        return score
 
     def update_candidates(self, new_row, new_col, extend):
-
         if (new_row, new_col) in self.candidates:
             self.candidates.pop((new_row, new_col))
         if extend:
@@ -112,8 +135,7 @@ class Board():
                 for dir in self.directions:
                     candi_idx = (new_row + i * dir[0], new_col + i * dir[1])
                     if self.can_put(*candi_idx):
-                        self.candidates[candi_idx] = Board.l2_distance(candi_idx, (new_row, new_col))
-
+                        self.candidates[candi_idx] = self.position_score(*candi_idx)
 
     def max(self, depth, alpha, beta):
         assert depth % 2 == 0

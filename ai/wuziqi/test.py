@@ -1,102 +1,45 @@
-def cal_score(self, piece_num, empty_num):
-    if piece_num == 5:
-        return 100000  # 成五
-    elif piece_num == 4:
-        if empty_num == 2:
-            return 10000  # 活四
-        elif empty_num == 1:
-            return 1000  # 死四
-    elif piece_num == 3:
-        if empty_num == 2:
-            return 1000  # 活三
-        elif empty_num == 1:
-            return 100
-    elif piece_num == 2:
-        if empty_num == 2:
-            return 100
-        elif empty_num == 1:
-            return 10
-    elif piece_num == 1 and empty_num == 2:
-        return 10
-    else:
-        return 0
+player_black_score = {
+    '01000': PLAYER_FLEX1_SCORE,
+    '00100': PLAYER_FLEX1_SCORE,
+    '00010': PLAYER_FLEX1_SCORE,
+    '11000': PLAYER_BLOCK2_SCORE,
+    '00011': PLAYER_BLOCK2_SCORE,
+    '01100': PLAYER_FLEX2_SCORE,
+    '00110': PLAYER_FLEX2_SCORE,
+    '11010': PLAYER_BLOCK3_SCORE,
+    '00111': PLAYER_BLOCK3_SCORE,
+    '11100': PLAYER_BLOCK3_SCORE,
+    '01110': PLAYER_FLEX3_SCORE,
+    '010110': PLAYER_FLEX3_SCORE,
+    '011010': PLAYER_FLEX3_SCORE,
+    '11101': PLAYER_BLOCK4_SCORE,
+    '11011': PLAYER_BLOCK4_SCORE,
+    '10111': PLAYER_BLOCK4_SCORE,
+    '11110': PLAYER_BLOCK4_SCORE,
+    '01111': PLAYER_BLOCK4_SCORE,
+    '011110': PLAYER_FLEX4_SCORE,
+    '11111': PLAYER_WIN_SCORE,
+}
 
-
-
-
-
-
-
-
-
-
-#
-    def check_row(self):
-        """
-        检查横向是否获胜
-        :returns: can win, winner color
-        """
-        for color in self.piece_colors:
-            for line in self.data:
-                for x in range(11):
-                    if (line[x:x + 5] == color).all():
-                        return True, color
-        return False, None
-
-    def check_col(self):
-        """
-        检查纵向是否获胜
-        :returns: can win, winner color
-        """
-        for color in self.piece_colors:
-            for line in self.data.T:
-                for y in range(11):
-                    if (line[y:y + 5] == color).all():
-                        return True, color
-        return False, None
-
-    def check_diag(self):
-        """
-        检查对角是否获胜
-        """
-        for color in self.piece_colors:
-            # 主对角线
-            status = True
-            for i in range(3):
-                if self.data[i][i] is not chess_color:
-                    status = False
-            if status is True:
-                # print("主对角线 '%s' 棋子获胜" % chess_color)
-                return True
-            # 副对角线
-            status = True
-            for i in range(3):
-                if self.data[2 - i][i] is not chess_color:
-                    status = False
-            if status is True:
-                # print("副对角线 '%s' 棋子获胜" % chess_color)
-                return True
-            return False
-
-    def check_win(self, x, y, color):
-        """
-        判断获胜
-        :return: True: win, False: loss, None: not sure
-        """
-        assert self.can_put(x, y)
-        for step_x, step_y in self.steps:
-            temp = [color]
-            for n in range(1, 6):
-                next_x = x + n * step_x
-                next_y = y + n * step_y
-                if self.in_range(next_x, next_y):
-                    temp.append(self.data[next_x, next_y])
-
-            if len(temp) == 5 and (np.array(temp) == color.value).all():
-                return True, color
-            if len(temp) > 5:
-                if (np.array(temp[:-1]) == color.value).all():
-                    return True
-                elif (np.array(temp) == color.value).all():
-                    return False
-        return None
+player_white_score = {
+    '02000': PLAYER_FLEX1_SCORE,
+    '00200': PLAYER_FLEX1_SCORE,
+    '00020': PLAYER_FLEX1_SCORE,
+    '22000': PLAYER_BLOCK2_SCORE,
+    '00022': PLAYER_BLOCK2_SCORE,
+    '02200': PLAYER_FLEX2_SCORE,
+    '00220': PLAYER_FLEX2_SCORE,
+    '22020': PLAYER_BLOCK3_SCORE,
+    '00222': PLAYER_BLOCK3_SCORE,
+    '22200': PLAYER_BLOCK3_SCORE,
+    '02220': PLAYER_FLEX3_SCORE,
+    '020220': PLAYER_FLEX3_SCORE,
+    '022020': PLAYER_FLEX3_SCORE,
+    '22202': PLAYER_BLOCK4_SCORE,
+    '22022': PLAYER_BLOCK4_SCORE,
+    '20222': PLAYER_BLOCK4_SCORE,
+    '22220': PLAYER_BLOCK4_SCORE,
+    '02222': PLAYER_BLOCK4_SCORE,
+    '022220': PLAYER_FLEX4_SCORE,
+    '22222': PLAYER_WIN_SCORE,
+}
