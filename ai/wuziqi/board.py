@@ -1,4 +1,5 @@
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import numpy as np
 
@@ -16,6 +17,7 @@ class Board():
         self.player_color = player_color
         self.ai_color = player_color.reverse()
         self.candidates = {}
+        self.executor = ThreadPoolExecutor(max_workers=6)
 
         if len(data):
             self.data = data
@@ -100,9 +102,15 @@ class Board():
                 temp.append(self.data[j + i, -(j + 1)])
             line_list.append(temp)
 
-        score_sum = 0
+        tasks = []
         for line in line_list:
-            score_sum += self.cal_score(line)
+            task = self.executor.submit(self.cal_score, (line))
+            tasks.append(task)
+
+        score_sum = 0
+        for future in as_completed(tasks):
+            score = future.result()
+            score_sum += score
         return score_sum
 
     def get_candidates(self) -> list:
