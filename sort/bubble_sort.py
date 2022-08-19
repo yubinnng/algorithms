@@ -3,11 +3,11 @@
 @author : qiyubing
 @date : 2020-06-08
 """
-num_list = [int(n) for n in input("请输入要排序的数，空格分隔：").split(" ")]
-
-for i in range(1, len(num_list)):
-    for j in range(len(num_list) - i):
-        if num_list[j] > num_list[j + 1]:
-            num_list[j], num_list[j + 1] = num_list[j + 1], num_list[j]
-
-print(num_list)
+# 111 5 7 1 4 3 2 1
+arr = list(map(int, input("请输入要排序的数，空格分隔：").split(" ")))
+n = len(arr)
+for i in range(n):
+    for j in range(n - i - 1): # 低位，从0至倒数第二位
+        if arr[j] > arr[j + 1]:
+            arr[j], arr[j + 1] = arr[j + 1], arr[j] # swap
+print(arr)

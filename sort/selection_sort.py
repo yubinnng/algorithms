@@ -3,16 +3,14 @@
 @author : qiyubing
 @date : 2020-06-08
 """
-result = []
-num_list = [int(n) for n in input("请输入要排序的数，空格分隔：").split(" ")]
-
-while len(num_list) is not 0:
-    min = 99999
-    for i in range(len(num_list)):
-        if num_list[i] < min:
-            min = num_list[i]
-            min_index = i
-    result.append(min)
-    num_list.pop(min_index)
-
-print(result)
+# 111 5 7 1 4 3 2 1
+arr = list(map(int, input("请输入要排序的数，空格分隔：").split(" ")))
+n = len(arr)
+for i in range(n): # 待插入位，从0至倒数第二位
+    min_idx = i # 初始化最小为第一个元素
+    # find min
+    for j in range(i + 1, n): # 查找最小元素
+        if arr[j] < arr[min_idx]:
+            min_idx = j
+    arr[i], arr[min_idx] = arr[min_idx], arr[i] # 将最小值交换到待插入位
+print(arr)
